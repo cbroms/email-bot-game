@@ -2,14 +2,16 @@ def parseEmail(message):
     return Response(message)
 
 def getSentence(message):
-    for line in message:
+    messageAr = message.split("\n")
+    for line in messageAr:
         if not line.isspace() and not "@" in line:
             return line
     return ""
 
 def getEmails(message):
+    messageAr = message.split("\n")
     result = []
-    for line in message:
+    for line in messageAr:
         line.replace(","," ")
         wrds = line.split(" ")
         for wrd in wrds:
@@ -18,6 +20,6 @@ def getEmails(message):
     return result
 
 class Response:
-    def __init__(self, message):
+    def init(self, message):
         self.user_sentence = getSentence(message)
         self.user_emails = getEmails(message)
