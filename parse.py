@@ -19,5 +19,5 @@ def getEmails(message):
 
 class Response:
     def __init__(self, message):
-        self.sentence = getSentence(message)
-        self.emails = getEmails(message)
+        self.user_sentence = getSentence(message)
+        self.user_emails = getEmails(message)
