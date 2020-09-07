@@ -1,15 +1,17 @@
 from __future__ import print_function
 import pickle
+import time 
 import os.path
 from email.mime.text import MIMEText
 import base64
+import re
 from googleapiclient.discovery import build
 from googleapiclient import errors
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 # If modifying these scopes, delete the file token.pickle.
-SCOPES = ['https://www.googleapis.com/auth/gmail.compose']
+SCOPES = ['https://mail.google.com/']
 service = None
 maxIterations = 3
 emails = []
@@ -75,17 +77,6 @@ def create_message(sender, to, subject, message_text):
   return {"raw": str( base64.b64encode(message.as_bytes()), "utf-8")}
 
 def create_draft(service, user_id, message_body):
-  """Create and insert a draft email. Print the returned draft's message and id.
-
-  Args:
-    service: Authorized Gmail API service instance.
-    user_id: User's email address. The special value "me"
-    can be used to indicate the authenticated user.
-    message_body: The body of the email message, including headers.
-
-  Returns:
-    Draft object, including draft id and message meta data.
-  """
   try:
     message = {'message': message_body}
     draft = service.users().drafts().create(userId=user_id, body=message).execute()
@@ -102,10 +93,38 @@ def create_and_send_email(service, message, recipient):
     res = service.users().drafts().send(userId="me", body={"id": draft["id"]}).execute()
 
 
+
+def sync_emails(service, history=None):
+
+  if history is not None:
+    print("checking for new messages... ", end="")
+    res = service.users().history().list(userId="me", startHistoryId=history).execute()
+    if "history" in res:
+      for message in res["history"][0]["messages"]:
+        print("\nnew message found, threadId: {}".format(message["threadId"]))
+        # get the message content 
+        res = service.users().messages().get(userId="me", id=message["id"], format="full").execute()
+        decodedBytes = base64.urlsafe_b64decode(res["payload"]["body"]["data"])
+        content = str(decodedBytes, "utf-8")
+        # parse the message, extracting the new sentence and word, in addition to new emails 
+        # parse_it()
+        # construct and send the new messages 
+        # create_and_send_email(service, "Hi there. This is a test.", "cbroms@andrew.cmu.edu")
+    else:
+      print("no new messages found")
+    return res["historyId"]
+  else:
+    print("syncing inbox... ", end="")
+    # get a list of the most recent messages in the inbox 
+    res = service.users().messages().list(userId="me").execute()
+    # get the most recent message's id 
+    most_recent = res["messages"][0]["id"]
+    # get the history timestamp of the most recent message 
+    res = service.users().messages().get(userId="me", id=most_recent).execute()
+    print("sync done")
+    return res["historyId"]
+
 def main():
-    """Shows basic usage of the Gmail API.
-    Lists the user's Gmail labels.
-    """
     creds = None
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -125,9 +144,16 @@ def main():
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
     global service 
-    service = build('gmail', 'v1', credentials=creds)
 
+    service = build('gmail', 'v1', credentials=creds)
     # now we can use the service to send, create, search through gmail 
+
+    history = sync_emails(service)
+
+    # check for new mail every 15 seconds 
+    while True:
+      history = sync_emails(service, history)
+      time.sleep(15)
     
     # initBot()
 
