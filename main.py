@@ -47,9 +47,14 @@ def endGame(story):
     for email in emails:
         create_and_send_email(service, message, email)
 
-# response is a struct(?) which contains user_sentence(string) and user_emails (array of strings)
-#story (array of strings) containing the paragraph stuff so far. arr[currIteration] to access current sentence.
+
 def receiveEmail(response, story):
+  """
+  :Arg response: a struct like-thing which contains data from the email.
+    contains user_sentence(string) and user_emails (array of strings)
+  :Arg story:(array of strings) so far. arr[currIteration] to access current sentence.
+    arr[currIteration] to access current sentence.
+  """
   if len(story) < maxIterations:
       story.append(response.user_setence)
       emails.append(response.user_emails)
@@ -156,6 +161,9 @@ def main():
       time.sleep(15)
     
     # initBot()
+
+
+
 
     
 if __name__ == '__main__':
