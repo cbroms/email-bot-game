@@ -20,6 +20,6 @@ def getEmails(message):
     return result
 
 class Response:
-    def init(self, message):
+    def __init__(self, message):
         self.user_sentence = getSentence(message)
         self.user_emails = getEmails(message)
