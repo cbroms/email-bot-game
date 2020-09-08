@@ -14,7 +14,10 @@ from google.auth.transport.requests import Request
 SCOPES = ['https://mail.google.com/']
 service = None
 maxIterations = 3
-emails = []
+players = []
+
+InitialEmails = ["mkomar@andrew.cmu.edu", "cbroms@andrew.cmu.edu"]
+ThisBot = Player("0", "Believe it or not, soup was invented by the Italians in 300AD.", "automadlibs@gmail.com", InitialEmails)
 
 def initBot():
   iterations = 0
@@ -42,10 +45,15 @@ def storyToString(story):
       string += sentence
   return string
 
-def endGame(story):
-    message = "Here's the story you've worked so hard to make\n\n" + storyToString(story)
-    for email in emails:
-        create_and_send_email(service, message, email)
+
+"""
+This will send everyone in the people array the story.
+"""
+def sendStoryToEveryone(story, people):
+    message = ""
+    message.join(story)
+    for person in people:
+        create_and_send_email(service, message, person.email)
 
 
 def receiveEmail(response, story):
@@ -57,10 +65,10 @@ def receiveEmail(response, story):
   """
   if len(story) < maxIterations:
       story.append(response.user_setence)
-      emails.append(response.user_emails)
+      players.append(response.user_emails)
       sendMessage(story, response.user_emails)
   else:
-      endGame(story)
+      endGame(players,ThisBot)
 
 
 def create_message(sender, to, subject, message_text):
