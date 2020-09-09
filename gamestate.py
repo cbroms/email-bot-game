@@ -64,7 +64,7 @@ def EndGame(graph, node):
                 neighbours.append(neighbour)
             sendStoryToEveryone(story,neighbours)
 
-
+#When we send them the email we add them to list.
 def addPlayerIntoList(player):
     referredEmails = player.emails
     referredPlayers = []
@@ -72,10 +72,9 @@ def addPlayerIntoList(player):
         referredPlayers.append(Player("TEMP", "",referredEmails[i],None,player))
     players[player] = referredPlayers
 
+#When we have a response from a given email
 def recieveEmail(response):
     #we need to find out who this is.
-    #so far, we know they were referred to someone, who that is we don't know.
-    #so based on what their email is and ID we can figure it out.
     for key in players:
         for player in players[key]:
             if player.id == response.id and player.email == response.email:
