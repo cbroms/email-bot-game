@@ -64,37 +64,22 @@ def EndGame(graph, node):
                 neighbours.append(neighbour)
             sendStoryToEveryone(story,neighbours)
 
-#When we send them the email we add them to list.
-def addPlayerIntoList(player):
-    referredEmails = player.emails
+#Init all these emails as players with their generated IDs
+def addPlayersIntoList(emails, ids,gamePlayers):
     referredPlayers = []
-    for i in range(len(referredEmails)):
-        referredPlayers.append(Player("TEMP", "",referredEmails[i],None,player))
-    players[player] = referredPlayers
+    for i in range(len(emails)):
+        referredPlayers.append(Player("TEMP", "",emails[i],None,player))
+    gamePlayers[player] = referredPlayers
 
 #When we have a response from a given email
-def recieveEmail(response):
+def recieveEmail(response, ident, ids, gamePlayers):
     #we need to find out who this is.
-    for key in players:
-        for player in players[key]:
-            if player.id == response.id and player.email == response.email:
+    for key in gamePlayers:
+        for player in gamePlayers[key]:
+            if player.id == ident:
                 print("do we get here")
                 #we know who this is now!
                 player.sentence = response.user_sentence
                 player.emails = response.user_emails
-                addPlayerIntoList(player)
+                addPlayersIntoList(player.emails, ids, gamePlayers)
                 return
-
-responder = Response(None)
-responder.id = "4"
-responder.email = "mkguo@andrew.cmue.edu"
-responder.user_emails = ["koz@andrew.cmu.edu", "golan@flong.org", "abonilla@andrew.cmu.edu"]
-responder.user_sentence = "Atleast it isn’t a pharmacy this time"
-
-# Driver Code
-
-
-
-recieveEmail(responder)
-EndGame(visited, players, A)
-

@@ -5,28 +5,40 @@ import os.path
 from email.mime.text import MIMEText
 import base64
 import re
+
 from googleapiclient.discovery import build
 from googleapiclient import errors
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
+from parse import parseEmail
+from gamestate import addPlayersIntoList, recieveEmail, Player
+
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://mail.google.com/']
 service = None
 maxIterations = 3
-players = []
+players = {}
 
-InitialEmails = ["mkomar@andrew.cmu.edu", "cbroms@andrew.cmu.edu"]
-ThisBot = Player("0", "Believe it or not, soup was invented by the Italians in 300AD.", "automadlibs@gmail.com", InitialEmails)
+
+
+#starting emails
+#player 1 email automadlibs@gmail.com 
+#starting sentences
+# #max iterations
+
+# def create_and_send_multiple_emails(service, message, emails):
+#   for email in emails: 
+#     create_and_send_email(service, message,email)
 
 def initBot():
   iterations = 0
-  story = ["Lorem ipsum dolor sit amet, consectetur adipiscing elit."]
-  message = "You’ve been nominated." + \
-            "\nAdd a sentence in after the sentence below." + "\n" + story[0] + \
-            "\nThank you\n\n iteration " + str(iterations) + " out of " + str(maxIterations)
-  initEmail = "mkomar@andrew.cmu.edu"
-  create_and_send_email( service, message,initEmail)
+  email = "automadlibs@gmail.com"
+  initalEmail = "mkomar@andrew.cmu.edu"
+
+  threadId = create_and_send_email(service, "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", initalEmail )
+  thisBot = Player(threadId, email, initalEmail, None)
+  players[thisBot] = [initalEmail]
 
 def generateMessage(story):
   message = "You’ve been nominated." + \
@@ -56,33 +68,23 @@ def sendStoryToEveryone(story, people):
         create_and_send_email(service, message, person.email)
 
 
-def receiveEmail(response, story):
-  """
-  :Arg response: a struct like-thing which contains data from the email.
-    contains user_sentence(string) and user_emails (array of strings)
-  :Arg story:(array of strings) so far. arr[currIteration] to access current sentence.
-    arr[currIteration] to access current sentence.
-  """
-  if len(story) < maxIterations:
-      story.append(response.user_setence)
-      players.append(response.user_emails)
-      sendMessage(story, response.user_emails)
-  else:
-      endGame(players,ThisBot)
+# def receiveEmail(response, story):
+#   """
+#   :Arg response: a struct like-thing which contains data from the email.
+#     contains user_sentence(string) and user_emails (array of strings)
+#   :Arg story:(array of strings) so far. arr[currIteration] to access current sentence.
+#     arr[currIteration] to access current sentence.
+#   """
+#   if len(story) < maxIterations:
+#       story.append(response.user_setence)
+#       players.append(response.user_emails)
+#       sendMessage(story, response.user_emails)
+#   else:
+#       endGame(players,ThisBot)
 
 
 def create_message(sender, to, subject, message_text):
-  """Create a message for an email.
 
-  Args:
-    sender: Email address of the sender.
-    to: Email address of the receiver.
-    subject: The subject of the email message.
-    message_text: The text of the email message.
-
-  Returns:
-    An object containing a base64url encoded email object.
-  """
   message = MIMEText(message_text)
   message['to'] = to
   message['from'] = sender
@@ -104,6 +106,7 @@ def create_and_send_email(service, message, recipient):
     email = create_message("automadlibs@gmail.com", recipient, "Test", message)
     draft = create_draft(service, "me", email)
     res = service.users().drafts().send(userId="me", body={"id": draft["id"]}).execute()
+    return res["threadId"]
 
 
 
@@ -117,12 +120,24 @@ def sync_emails(service, history=None):
         print("\nnew message found, threadId: {}".format(message["threadId"]))
         # get the message content 
         res = service.users().messages().get(userId="me", id=message["id"], format="full").execute()
-        decodedBytes = base64.urlsafe_b64decode(res["payload"]["body"]["data"])
-        content = str(decodedBytes, "utf-8")
-        # parse the message, extracting the new sentence and word, in addition to new emails 
-        # parse_it()
-        # construct and send the new messages 
-        # create_and_send_email(service, "Hi there. This is a test.", "cbroms@andrew.cmu.edu")
+        try:
+          decodedBytes = base64.urlsafe_b64decode(res["payload"]["body"]["data"])
+          content = str(decodedBytes, "utf-8")
+          # parse the message, extracting the new sentence and word, in addition to new emails 
+          parsed = parseEmail(content)
+          print(parsed.user_emails, parsed.user_sentence)
+          # construct and send the new messages 
+          ids = []
+          for email in parse.user_emails:
+            threadId = create_and_send_email(service, "Hi there. This is a test.", email)
+            print(threadId)
+            ids.append(threadId)
+          # update the game state with the response and new emails 
+          receiveEmail(parsed, message["threadId"], ids, players)
+        except:
+          pass
+          # print("not a new email")
+
     else:
       print("no new messages found")
     return res["historyId"]
@@ -161,15 +176,15 @@ def main():
     service = build('gmail', 'v1', credentials=creds)
     # now we can use the service to send, create, search through gmail 
 
+    initBot()
+
     history = sync_emails(service)
 
     # check for new mail every 15 seconds 
     while True:
+      # get any new replies and deal with them (parse, send to invited friends, etc)
       history = sync_emails(service, history)
       time.sleep(15)
-    
-    # initBot()
-
 
 
 
