@@ -3,10 +3,22 @@ def parseEmail(message):
 
 def getSentence(message):
     messageAr = message.split("\n")
-    for line in messageAr:
-        if not line.isspace() and not "@" in line:
-            return line
-    return ""
+
+    # find the line that contains automadlibs@gmail.com, indicating we've reached the section
+    # with the old email copied 
+
+    for i in range(len(messageAr)):
+        if i < len(messageAr) - 1 and "automadlibs@gmail.com" in messageAr[i]:
+            del messageAr[i:]
+    
+    message = " ".join(messageAr)
+    messageAr = message.split(" ")
+    res = ""
+    for word in messageAr:
+        if not "@" in word:
+            res += " " + word.strip()
+    res = res.strip()
+    return res
 
 def getEmails(message):
     messageAr = message.split("\n")
@@ -15,7 +27,7 @@ def getEmails(message):
         line.replace(","," ")
         wrds = line.split(" ")
         for wrd in wrds:
-            if "@" in wrd:
+            if "@" in wrd and "automadlibs" not in wrd and "mailto" not in wrd and "<" not in wrd:
                 result.append(wrd)
     return result
 

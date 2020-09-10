@@ -65,21 +65,23 @@ def EndGame(graph, node):
             sendStoryToEveryone(story,neighbours)
 
 #Init all these emails as players with their generated IDs
-def addPlayersIntoList(emails, ids,gamePlayers):
+def addPlayersIntoList(emails, ids,gamePlayers, player):
     referredPlayers = []
     for i in range(len(emails)):
-        referredPlayers.append(Player("TEMP", "",emails[i],None,player))
+        referredPlayers.append(Player(ids[i], "" ,emails[i],None,player))
     gamePlayers[player] = referredPlayers
 
 #When we have a response from a given email
 def recieveEmail(response, ident, ids, gamePlayers):
-    #we need to find out who this is.
+    #we need to find out who this is
     for key in gamePlayers:
-        for player in gamePlayers[key]:
-            if player.id == ident:
-                print("do we get here")
-                #we know who this is now!
-                player.sentence = response.user_sentence
-                player.emails = response.user_emails
-                addPlayersIntoList(player.emails, ids, gamePlayers)
-                return
+        if str(key.id) == str(ident):
+            #we know who this is now!
+            referredPlayers = []
+            for i in range(len(key.emails)):
+                responder = Player(ids[i], response.user_sentence, key.emails[i],response.user_emails,key)
+                addPlayersIntoList(responder.emails,ids,gamePlayers,responder)
+                referredPlayers.append(responder)
+            gamePlayers[key] = referredPlayers
+            return key
+    return key
