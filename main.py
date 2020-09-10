@@ -33,10 +33,15 @@ threads = []
 #     create_and_send_email(service, message,email)
 
 def initBot():
+  print("Please type max Iterations")
+  global maxIterations
+  maxIterations = int(input())
   iterations = 0
   email = "automadlibs@gmail.com"
-  initalEmail = "cbroms@andrew.cmu.edu"
-  message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+  print("Please type initial player's email ")
+  initalEmail = input()
+  print("Please type initial message.")
+  message = input()
   threadId = create_and_send_email(service, generateMessage(message, email), "It's your turn to play!", initalEmail )
   threads.append({"message": message, "email": email, "sentTo": initalEmail})
 
